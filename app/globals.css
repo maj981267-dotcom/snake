@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Snake game styles */
+.game-root {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.game-panel {
+  background: #0f172a;
+  padding: 18px;
+  border-radius: 10px;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 24px rgba(2,6,23,0.6);
+}
+.game-canvas {
+  image-rendering: pixelated;
+  border: 4px solid #0ea5a4;
+  background: #071021;
+  display: block;
+}
+.hud {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.controls button {
+  margin: 6px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #06b6d4;
+  color: #052f3b;
+  cursor: pointer;
+}
+.controls button:hover { opacity: 0.9 }
+.hint { opacity: 0.8; font-size: 13px; }
