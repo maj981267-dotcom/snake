@@ -15,11 +15,15 @@ export default function Home() {
   const [snake, setSnake] = useState<Point[]>([ { x: 9, y: 9 }]);
   const [dir, setDir] = useState<Point>({ x: 1, y: 0 });
   const [food, setFood] = useState<Point>(() => randomFood([ { x: 9, y: 9 }]));
-  const [running, setRunning] = useState(true);
+  const [running, setRunning] = useState(false);
   const [score, setScore] = useState(0);
   const [speed, setSpeed] = useState(120);
+  const [playerName, setPlayerName] = useState("");
+  const [nameSet, setNameSet] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
 
   useEffect(() => {
+    if (!nameSet) return;
     const handleKey = (e: KeyboardEvent) => {
       const key = e.key;
       if (key === "ArrowUp" || key === "w") changeDir({ x: 0, y: -1 });
@@ -30,7 +34,7 @@ export default function Home() {
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [snake]);
+  }, [snake, nameSet]);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -60,6 +64,9 @@ export default function Home() {
       // collision with self -> game over
       if (prev.some(p => p.x === newHead.x && p.y === newHead.y)) {
         setRunning(false);
+        setGameOver(true);
+        // 保存分数到数据库
+        saveScore(score);
         return prev;
       }
       let grew = false;
@@ -102,22 +109,70 @@ export default function Home() {
     setScore(0);
     setSpeed(120);
     setRunning(true);
+    setGameOver(false);
+  }
+
+  async function saveScore(finalScore: number) {
+    try {
+      const response = await fetch('/api/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerName, score: finalScore }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        console.log('分数已保存:', data);
+      } else {
+        console.error('保存失败:', data);
+      }
+    } catch (error) {
+      console.error('保存分数错误:', error);
+    }
   }
 
   return (
     <div className="game-root">
       <div className="game-panel">
         <h1>贪吃蛇</h1>
-        <div className="hud">
-          <div>得分: <strong>{score}</strong></div>
-          <div>速度: <strong>{Math.round(1000 / speed)}</strong></div>
-        </div>
-        <canvas ref={canvasRef} width={WIDTH} height={HEIGHT} className="game-canvas" />
-        <div className="controls">
-          <button onClick={() => setRunning(r => !r)}>{running ? "暂停" : "继续"}</button>
-          <button onClick={reset}>重新开始</button>
-        </div>
-        <p className="hint">使用方向键或 WASD 控制，空格 暂停/继续。</p>
+        {!nameSet ? (
+          <form
+            className="player-form"
+            onSubmit={e => {
+              e.preventDefault();
+              if (playerName.trim()) setNameSet(true);
+            }}
+            style={{ display: "flex", flexDirection: "column", gap: 8 }}
+          >
+            <label htmlFor="playerName">请输入玩家名称：</label>
+            <input
+              id="playerName"
+              type="text"
+              value={playerName}
+              onChange={e => setPlayerName(e.target.value)}
+              maxLength={20}
+              required
+              style={{ padding: "6px", borderRadius: "6px", border: "1px solid #ccc" }}
+            />
+            <button type="submit" style={{ marginTop: 8, padding: "8px 12px", borderRadius: 6, background: "#06b6d4", color: "#052f3b", border: "none" }}>
+              开始游戏
+            </button>
+          </form>
+        ) : (
+          <>
+            <div className="hud">
+              <div>玩家: <strong>{playerName}</strong></div>
+              <div>得分: <strong>{score}</strong></div>
+              <div>速度: <strong>{Math.round(1000 / speed)}</strong></div>
+            </div>
+            <canvas ref={canvasRef} width={WIDTH} height={HEIGHT} className="game-canvas" />
+            {gameOver && <div className="game-over">游戏结束！分数已保存</div>}
+            <div className="controls">
+              <button onClick={() => setRunning(r => !r)}>{running ? "暂停" : "继续"}</button>
+              <button onClick={reset}>重新开始</button>
+            </div>
+            <p className="hint">使用方向键或 WASD 控制，空格 暂停/继续。</p>
+          </>
+        )}
       </div>
     </div>
   );
